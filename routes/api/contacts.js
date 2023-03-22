@@ -6,10 +6,11 @@ const{
   getContactById,
   addContact,
   removeContact,
-  updateContact
+  updateContact,
+  updateStatusContact,
 } = require("../../models/contacts");
 
-const {schema} = require("../../schema/contactSchema");
+const {contactSchema} = require("../../schema/contactSchema");
 
 const router = express.Router();
 
@@ -29,13 +30,13 @@ router.get('/:contactId', async (req, res, next) => {
   })
 
 router.post('/', async (req, res, next) => {
-  try {
-   await schema.validateAsync(req.body)
-   const addedContact = await addContact(req.body);
-   return res.status(201).json(addedContact);
-  } catch (error){
-    return res.status(400).json({message: "Missing required field"});
-  }
+    try {
+      const { name, email, phone, favorite } = req.body;
+      const addedContact = await addContact(name, email, phone, favorite);
+      return res.status(201).json(addedContact);
+    } catch (error){
+      return res.status(400).json({message: "Missing required fields"})
+    }
 })
 
 router.delete('/:contactId', async (req, res, next) => {
@@ -50,16 +51,38 @@ router.delete('/:contactId', async (req, res, next) => {
 
 router.put('/:contactId', async (req, res, next) => {
   const { contactId } = req.params;
+  const { error } = contactSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({message: "missing fields"});
+  }
   try {
     if (!contactId) {
       return res.status(404).json({message: "Not found"});
-    } else{
-    await schema.validateAsync(req.body);
+    } else {
     const upContact = await updateContact(contactId, req.body);
     return res.status(200).json(upContact);}
-  } catch (error){
-    return res.status(400).json({message: "Missing fields"})
+  } catch {
+    res.status(500).json({message: "something wrong"});
   }
 })
+
+router.patch('/:contactId/favorite', async (req, res, next) => {
+  const { contactId } = req.params;
+  const { favorite } = req.body;
+  const { error } = contactSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({message: "missing field favorite"});
+  }
+  try {
+    const upStatus = await updateStatusContact(contactId, favorite);
+    if (upStatus) {
+      res.status(200).json(upStatus);
+    } else {
+      res.status(404).json({ message: "Not found" });
+    }
+  } catch {
+    res.status(500).json({message: "something wrong"});
+  }
+});
 
 module.exports = router
