@@ -1,48 +1,36 @@
 const fs = require("fs").promises;
-const path = require("path");
 
-const contactsPath = path.join(__dirname, "contacts.json");
-
+const {Contact} = require("../schema/contactSchema")
 
 const listContacts = async () => {
-    const contacts = await fs.readFile(contactsPath);
-    const parsedContacts = JSON.parse(contacts);
-    return parsedContacts;
+  const contacts = await Contact.find();
+  return contacts;
 };
 
-const getContactById = async (contactId) => {
-  const contacts = await listContacts();
-  const contact = contacts.find((contact)=> contact.id === contactId);
+const getContactById = async (_id) => {
+  const contact = await Contact.findOne({_id})
   return contact;
 }
 
-const removeContact = async (contactId) => {
-  const contacts = await listContacts();
-  const contactRemove = contacts.filter((contact)=> contact.id !== contactId)
-  const parsedContactsRemove = JSON.stringify(contactRemove);
-  await fs.writeFile(contactsPath, parsedContactsRemove);
-  return contacts;
+const removeContact = async (_id) => {
+  await Contact.findByIdAndDelete({ _id });
 }
 
-const addContact = async (body) => {
-  const contacts = await listContacts();
-  const contactAdd = { id: `${contacts.length + 10}`, ...body };
-  contacts.push(contactAdd);
-  const parsedContactsAdded = JSON.stringify(contacts);
-  await fs.writeFile(contactsPath, parsedContactsAdded);
-  return contactAdd;
+const addContact = async (name, email, phone, favorite) => {
+    const contact = new Contact({ name, email, phone, favorite });
+    contact.save();
+    return contact;
 }
 
-const updateContact = async (contactId, body) => {
-  const contacts = await listContacts();
-  const contactIndex = contacts.findIndex((contact)=> contact.id === contactId);
-    if (contactIndex === -1) {
-      return null;
-    }
-  contacts[contactIndex] = {...contacts[contactIndex], ...body};
-  const parsedContactsUp = JSON.stringify(contacts);
-  await fs.writeFile(contactsPath, parsedContactsUp);
-  return contacts[contactIndex];
+
+const updateContact = async (id, newContact) => {
+    const upContact = await Contact.findByIdAndUpdate(id, newContact);
+    return upContact;
+}
+
+const updateStatusContact = async (id, favorite) =>{
+    const updatedStatus = await Contact.findByIdAndUpdate(id, { favorite });
+    return updatedStatus;
 }
 
 module.exports = {
@@ -51,4 +39,5 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
+  updateStatusContact,
 }
