@@ -9,18 +9,19 @@ const{
   updateContact,
   updateStatusContact,
 } = require("../../models/contacts");
+const {auth} = require("../../auth/auth");
 
 const {contactSchema} = require("../../schema/contactSchema");
 
 const router = express.Router();
 
 
-router.get('/', async (req, res, next) => {
+router.get('/', auth, async (req, res, next) => {
     const contacts = await listContacts();
     res.status(200).json(contacts);
 })
 
-router.get('/:contactId', async (req, res, next) => {
+router.get('/:contactId', auth, async (req, res, next) => {
     const { contactId } = req.params;
     const contact = await getContactById(contactId);
     if (!contact) {
@@ -29,17 +30,17 @@ router.get('/:contactId', async (req, res, next) => {
     res.status(200).json(contact);
   })
 
-router.post('/', async (req, res, next) => {
+router.post('/', auth, async (req, res, next) => {
     try {
-      const { name, email, phone, favorite } = req.body;
-      const addedContact = await addContact(name, email, phone, favorite);
+      const { name, email, phone, favorite, owner } = req.body;
+      const addedContact = await addContact(name, email, phone, favorite, owner);
       return res.status(201).json(addedContact);
     } catch (error){
       return res.status(400).json({message: "Missing required fields"})
     }
 })
 
-router.delete('/:contactId', async (req, res, next) => {
+router.delete('/:contactId', auth,  async (req, res, next) => {
   const { contactId } = req.params;
   try {
     await removeContact(contactId);
@@ -49,7 +50,7 @@ router.delete('/:contactId', async (req, res, next) => {
   }
 })
 
-router.put('/:contactId', async (req, res, next) => {
+router.put('/:contactId', auth, async (req, res, next) => {
   const { contactId } = req.params;
   const { error } = contactSchema.validate(req.body);
   if (error) {
@@ -66,7 +67,7 @@ router.put('/:contactId', async (req, res, next) => {
   }
 })
 
-router.patch('/:contactId/favorite', async (req, res, next) => {
+router.patch('/:contactId/favorite', auth, async (req, res, next) => {
   const { contactId } = req.params;
   const { favorite } = req.body;
   const { error } = contactSchema.validate(req.body);
