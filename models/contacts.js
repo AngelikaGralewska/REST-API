@@ -16,12 +16,11 @@ const removeContact = async (_id) => {
   await Contact.findByIdAndDelete({ _id });
 }
 
-const addContact = async (name, email, phone, favorite) => {
-    const contact = new Contact({ name, email, phone, favorite });
+const addContact = async (name, email, phone, favorite, owner) => {
+    const contact = new Contact({ name, email, phone, favorite, owner });
     contact.save();
     return contact;
 }
-
 
 const updateContact = async (id, newContact) => {
     const upContact = await Contact.findByIdAndUpdate(id, newContact);
