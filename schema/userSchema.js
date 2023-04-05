@@ -24,6 +24,9 @@ const users = new Schema(
           type: String,
           default: null,
         },
+        avatarURL: {
+          type: String,
+        },
       }
 );
 
@@ -37,7 +40,7 @@ const User = mongoose.model("user", users);
 
 
 const schemaValidation = Joi.object({
-    email: Joi.string().required().email(),
+    email: Joi.string().required(),
     password: Joi.string().required().min(5),
 });
 
