@@ -1,12 +1,16 @@
+const gravatar = require("gravatar")
+
 const{
     User,
     hashPassword
 } = require("../schema/userSchema");
 
 
+
 const createUser = async (email, password) => {
+    const avatarURL = gravatar.url(email)
     const hashedPassword = hashPassword(password);
-    const user = new User ({ email, password: hashedPassword });
+    const user = new User ({ email, password: hashedPassword, avatarURL });
     user.save();
     return user;
 };
@@ -25,7 +29,6 @@ const updateToken = async (id, token) => {
     const user = await User.findByIdAndUpdate(id, { token }, { new: true });
     return user;
 };
-
 
 module.exports = {
     createUser,
