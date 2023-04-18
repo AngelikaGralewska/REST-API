@@ -27,6 +27,13 @@ const users = new Schema(
         avatarURL: {
           type: String,
         },
+        verify: {
+          type: Boolean,
+          default: false,
+        },
+        verificationToken: {
+          type: String,
+        },
       }
 );
 
@@ -44,4 +51,8 @@ const schemaValidation = Joi.object({
     password: Joi.string().required().min(5),
 });
 
-module.exports = {User, usersSchema: schemaValidation, hashPassword};
+const schemaValidationVerify = Joi.object({
+  email: Joi.string().required(),
+});
+
+module.exports = {User, usersSchema: schemaValidation, verifySchema: schemaValidationVerify, hashPassword};
