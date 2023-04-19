@@ -149,7 +149,7 @@ router.post("/verify/", async (req, res, next) => {
     if (error) {
       return res.status(400).send(error.details[0].message);
     }
-  const { email } = req.body;
+  const {email} = req.body;
   try {
     const user = await getUserByEmail(email);
     if (!user) {

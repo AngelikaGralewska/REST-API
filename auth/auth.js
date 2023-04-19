@@ -12,13 +12,16 @@ const auth = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, jwtSecret);
     const id = decoded.id;
-    
     const user = await getUserById(id);
     if (user) {
+      req.user = user;
       next();
     } else {
       return res.status(401).send("Not authorized");
     }
+    if(!user.verify) {
+      res.status(401).json({message: 'Email not verified'})
+   }
   } catch {
     return res.status(401).send("Access denied");
   }
