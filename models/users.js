@@ -1,4 +1,5 @@
-const gravatar = require("gravatar")
+const gravatar = require("gravatar");
+const { v4: uuidv4 } = require("uuid");
 
 const{
     User,
@@ -10,7 +11,8 @@ const{
 const createUser = async (email, password) => {
     const avatarURL = gravatar.url(email)
     const hashedPassword = hashPassword(password);
-    const user = new User ({ email, password: hashedPassword, avatarURL });
+    const verificationToken = uuidv4();
+    const user = new User ({ email, password: hashedPassword, avatarURL, verificationToken });
     user.save();
     return user;
 };
@@ -30,9 +32,15 @@ const updateToken = async (id, token) => {
     return user;
 };
 
+const getUserByToken = async (verificationToken) => {
+    const user = await User.findOne({ verificationToken });
+    return user;
+};
+
 module.exports = {
     createUser,
     getUserByEmail,
     getUserById,
-    updateToken
+    updateToken,
+    getUserByToken
 };

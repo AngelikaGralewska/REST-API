@@ -10,12 +10,17 @@ const {
     createUser,
     getUserById,
     updateToken,
+    getUserByToken
   } = require("../../models/users");
 const {loginHandler} = require("../../auth/logIn");
 const {auth} = require("../../auth/auth");
 const { upload } = require("../../file/pictureFiles");
+const {sendEmail} = require("../../email/email")
 
-const {usersSchema} = require("../../schema/userSchema");
+const {
+  usersSchema,
+  verifySchema
+} = require("../../schema/userSchema");
 
 const {User} = require("../../schema/userSchema")
 
@@ -37,6 +42,13 @@ router.post("/signup", async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const newUser = await createUser(email, password);
+    const msg = {
+      to: email,
+      subject: 'Verification email',
+      text: 'Please verify your email by click link below',
+      html: `<p><a target="_blank" href="http://localhost:3000/api/users/verify/${newUser.verificationToken}">verification link</a></p>`,
+    };
+    await sendEmail(msg);
     return res.status(201).json(newUser);
   } catch {
     return res.status(500).send("Something went wrong");
@@ -114,5 +126,55 @@ router.patch("/avatars", auth, upload.single("avatar"), async (req, res, next) =
     return res.status(401).send({ message: "Not authorized" })
   }
 });
+
+router.get("/verify/:verificationToken", async (req, res, next) => {
+  const { verificationToken } = req.params;
+  try {
+    const user = await getUserByToken(verificationToken);
+    if (!user) {
+      res.status(404).json({message: "User not found"});
+    } else {
+      user.verificationToken = null;
+      user.verify = true;
+      user.save();
+      res.status(200).send({ message: "Verification successful" });
+    }
+  } catch {
+    return res.status(500).send("Something went wrong");
+  }
+});
+
+router.post("/verify/", async (req, res, next) => {
+  const { error } = verifySchema.validate(req.body);
+    if (error) {
+      return res.status(400).send(error.details[0].message);
+    }
+  const {email} = req.body;
+  try {
+    const user = await getUserByEmail(email);
+    if (!user) {
+      return res
+        .status(404)
+        .send({ message: "Email not found. You have to sign in" });
+    }
+    if (user && user.verify) {
+      return res
+        .status(400)
+        .json({ message: "Verification has already been passed" });
+    } else {
+      const msg = {
+        to: email,
+        subject: 'Verification email',
+        text: 'Please verify your email by click link below',
+        html: `<p><a target="_blank" href="http://localhost:3000/api/users/verify/${user.verificationToken}">verification link</a></p>`,
+      };
+      await sendEmail(msg);
+      return res.status(200).send({message: "Verification email sent",});
+    }
+  } catch {
+    return res.status(500).send("Something went wrong");
+  }
+});
+
   
   module.exports = router;
